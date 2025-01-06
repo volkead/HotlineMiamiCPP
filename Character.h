@@ -1,48 +1,95 @@
 #ifndef CHARACTER_H
 #define CHARACTER_H
 
-#include <SFML/Audio.hpp> 
+#include <SFML/Audio.hpp>
 #include <SFML/Window.hpp>
 #include <SFML/Graphics.hpp>
 #include <string>
-#include <iostream>;
+#include <cmath>
+#include "Weapon.h"
+
 using namespace std;
 using namespace sf;
 
-
-class Character {
+class Character : public Transformable
+{
 protected:
-    sf::Event event;
+    // Sprites et position
+    Sprite sprite;
+    Sprite spriteFoots;
+    Vector2f position;
 
-    sf::Sprite sprite;
-    sf::Vector2f position;
+    // États du personnage
     float speed;
-    int health;
-    sf::Texture texture;
+    bool dead;
+    bool hasWeapon = false;
+    bool isAttacking = false;
+    bool firstAttack;
 
-    sf::IntRect frameSpr;
+    // Animation d'attaque
+    const float attackCooldown = 0.2f;
+    int attackAnimationFrame = 0;
+    int totalAttackFrames = 8;
+
+    // Cône d'attaque
+    ConvexShape actionCone;
+    float actionRange = 25.0f;
+    float coneAngle = 45.0f;
+
+    // Texture et frames
+    Texture texture;
+    IntRect frameSpr;
+    IntRect frameSprFoots;
+
+    // Timers d'animation
+    Clock animationClock;
+    Clock animationClock2;
+
+    // Range d'animation
+    int animationLineWalk = 0;
+    int animationLineAttack = 320;
+
+    // Initialisation du cône d'attaque
+    void initializeAttackCone();
+
+private:
+    // Angles de direction
+    float angleRad;
+    float angleDeg;
 
 public:
+    // Directions et état du personnage
+    Vector2f direction;
+    bool isBlocked;
+    Weapon* weaponToPick = nullptr;  // Pointeur vers une arme à ramasser
+    Weapon* equippedWeapon = nullptr; // Arme équipée (copie ou initialisation vide)
+    Character* enemyInRange = nullptr; // Ennemie dans la portée
 
-    sf::Vector2f direction;
+    // Collider
+    CircleShape collider;
 
-    //Character(const std::string& textureFile, sf::Vector2f startPosition, int startHealth, float moveSpeed);
-    //virtual ~Character() = default;
+    // Constructeur
+    Character(const string& textureFile, Vector2f startPosition, float moveSpeed, bool deadState);
 
-    virtual void Move(Time deltaTime);
-    virtual void attack() = 0;
-    void takeDamage(int amount);
-    bool isDead() ;
+    // Fonctions de mouvement et d'attaque
+    void lookAtTarget(Vector2f target);
+    void Move(Time deltaTime);
+    void Attack();
+    void SecondAction();
+    void Pickup(Weapon* weapon);
+    void Drop();
 
-    void setPosition(sf::Vector2f newPosition);
-    sf::Vector2f getPosition() ;
+    // Gestion de l'état de vie
+    void KnockOut(Character* enemy);
+    void Kill(Character* enemy);
+    bool isDead();
 
-    sf::Sprite getSprite() ;
+    // Gestion des sprites et affichage
+    Sprite getSprite();
+    void Draw(RenderWindow& window, int layer);
 
-    void SetRotation(float angle);
-    
-
-    //void update(float deltaTime);
+    // Mise à jour du personnage
+    virtual void Update();
 };
 
 #endif // CHARACTER_H
